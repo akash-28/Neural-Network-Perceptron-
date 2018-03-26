@@ -1,0 +1,46 @@
+#Neural Network to identify hand written digits
+
+import tensorflow as tf
+
+from tensorflow.examples.tutorials.mnist import input_data
+mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
+
+sess = tf.InteractiveSession()
+
+x = tf.placeholder(tf.float32, shape = [None,784])#input nodes--28*28=784 and 28 is the dimension of our input images
+y = tf.placeholder(tf.float32, shape = [None,10])#output nodes -- 10 is there because we have 10 digits between 0-9
+w = tf.Variable(tf.zeros([784,10])) #weight initialized to zeros
+b = tf.Variable(tf.zeros([10]))#bias
+
+sess.run(tf.global_variables_initializer())
+
+#linear regression model
+y_ = tf.matmul(x,w) + b     # y_ is our predicted value
+
+#loss function--main aim to minimize the loss function thereby improving the accuracy
+#here our loss function is called "cross entropy" which basically means the diff b/w actual output and the predicted output
+#for that we will use softmax --- cros entropy = loss
+cross_entropy = tf.reduce_mean (
+    tf.nn.softmax_cross_entropy_with_logits(labels = y, logits = y_) #labels are the target output and logits are the actual output which we got
+)
+
+#train the model--we use steepest gradient desecent method to reduce the 'mean' thereby reducing the 'loss'
+train_step = tf.train.GradientDescentOptimizer(0.4).minimize(cross_entropy)
+
+#load the 100 images for every single iteration of the "for loop" then train the machine
+for _ in range(1000):
+    batch = mnist.train.next_batch(100)#loading 100images
+    train_step.run(feed_dict = {x:batch[0], y:batch[1]})#feeding the images to the x and y placeholders
+
+
+##below is for checking the accuracy on test data after the training has been done
+
+#use argmax function to check if our actual prediction matched the desired prediction
+correct_prediction = tf.equal(tf.argmax(y_,1), tf.argmax(y,1))
+
+#calculate the accuracy
+accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
+#evaluate the accuracy on the test data
+print(accuracy.eval(feed_dict= {x:mnist.test.images, y:mnist.test.labels}))
+
